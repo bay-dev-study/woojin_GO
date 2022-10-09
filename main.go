@@ -33,3 +33,5 @@ func main() {
 // Println 에서 P가 대문자인 이유: export 가능 . 소문자 -> export 안됨
 // Go 에서는 변수를 선언하고 사용하지 않으면 오류가 난다
 // 리턴값을 무시할때는 _ 를 이용한다 a , _ :=
+
+//makechange
