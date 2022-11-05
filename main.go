@@ -22,13 +22,19 @@ var baseURL string = "https://www.jobkorea.co.kr/Search/?stext=python&tabType=re
 
 func main() {
 	var jobs []extractedJob
+	c := make(chan []extractedJob)
 	totalPages := getPages()
 	fmt.Println(totalPages)
 
 	for i := 0; i < totalPages; i++ {
-		extractedJobs := getPage(i)
-		jobs = append(jobs, extractedJobs...)
+		go getPage(i, c)
+
 	}
+	for i := 0; i < totalPages; i++ {
+		extractJobs := <-c
+		jobs = append(jobs, extractJobs...)
+	}
+
 	writeJobs(jobs)
 	fmt.Println("Done, extracted= ", len(jobs))
 }
@@ -55,7 +61,7 @@ func cleanString(str string) string {
 }
 
 // https://www.jobkorea.co.kr/Search/?stext=python&tabType=recruit&Page_No=1
-func getPage(page int) []extractedJob {
+func getPage(page int, mainC chan<- []extractedJob) {
 	var jobs []extractedJob
 	c := make(chan extractedJob)
 	pageURL := baseURL + "&Page_No=" + strconv.Itoa(page)
@@ -78,10 +84,10 @@ func getPage(page int) []extractedJob {
 		job := <-c
 		jobs = append(jobs, job)
 	}
-	return jobs
+	mainC <- jobs
 }
 
-func extractJob(card *goquery.Selection, c chan<- extractedJob) extractedJob {
+func extractJob(card *goquery.Selection, c chan<- extractedJob) {
 	id, _ := card.Attr("data-gno")
 	title := cleanString(card.Find(".title").Text())
 	location := cleanString(card.Find(".loc.long").Text())
